@@ -1,103 +1,108 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import axios from "axios";
+import mqtt, { MqttClient } from "mqtt";
+import type { HdtCreateResponse } from "@/types/hdt";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [jsonInput, setJsonInput] = useState("");
+  const mqttBrokerUrl = process.env.MQTT_BROKER || "ws://localhost:9001"
+  const mqttClientRef = useRef<MqttClient | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  useEffect(() => {
+      const client = mqtt.connect(mqttBrokerUrl);
+
+      client.on("connect", () => {
+        console.log("MQTT connected");
+      });
+
+      client.on("message", (topic, payload) => {
+        console.log(`Received on topic ${topic}:\n ${payload}`)
+      });
+
+      client.on("error", (err) => {
+        console.error("MQTT Error:", err);
+      });
+
+      mqttClientRef.current = client;
+
+      return () => {
+        client.end(); // Clean up on unmount
+      };
+    }, []
+  );
+
+  const handleJsonChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setJsonInput(event.target.value);
+  };
+
+  const handleSubmit = async () => {
+    let jsonObject: object;
+    try {
+      jsonObject = JSON.parse(jsonInput);
+    } catch {
+      alert("Invalid JSON input.");
+      return;
+    }
+    try {
+      // Typed response from your backend
+      const response = await axios.post<HdtCreateResponse>(
+        "http://localhost:8080/api/hdt/new",
+        jsonObject
+      );
+
+      if ([200, 201].includes(response.status)) {
+        const responseData = response.data;
+        console.log("DigitalTwin created:", responseData);
+        responseData.models.forEach((m) => {
+          m.properties.forEach(p => {
+            subscribeToMQTT(`${responseData.id}/state/${p.type}`)
+          });
+        })        
+      } else {
+        alert("Failed to create DigitalTwin.");
+      }
+    } catch (error) {
+      console.error("Error creating DigitalTwin:", error);
+      alert("Failed to connect to backend.");
+    }
+  };
+
+  const subscribeToMQTT = (topic: string) => {
+    const client = mqttClientRef.current;
+
+    if (!client || !client.connected) {
+      console.error("MQTT client not connected");
+      return;
+    }
+
+    client.subscribe(topic, (err) => {
+      if (err) {
+        console.error("Subscription error:", err);
+      } else {
+        console.log(`Subscribed to topic: ${topic}`);
+      }
+    });
+  };
+
+  return (
+    <main className="p-8 space-y-4">
+      <h1 className="text-xl font-bold">Digital Twin Client (Typed)</h1>
+
+      <textarea
+        className="w-full h-64 p-4 border rounded shadow"
+        placeholder="Enter your JSON here"
+        value={jsonInput}
+        onChange={handleJsonChange}
+      />
+
+      <button
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        onClick={handleSubmit}
+      >
+        Create DigitalTwin
+      </button>
+    </main>
   );
 }

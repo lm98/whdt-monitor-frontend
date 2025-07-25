@@ -1,0 +1,40 @@
+{
+    "id": "hd1",
+    "properties": [
+        {
+            "type": "given-name",
+            "givenName": "John",
+            "name": "Given Name",
+            "internalName": "given-name",
+            "description": "A name property.",
+            "id": "custom:given-name"
+        },
+        {
+            "type": "surname",
+            "surname": "Doe",
+            "name": "Surname",
+            "internalName": "surname",
+            "description": "A name property.",
+            "id": "custom:surname"
+        },
+        {
+            "type": "blood-pressure",
+            "systolic": 120,
+            "diastolic": 80,
+            "name": "Blood Pressure",
+            "internalName": "blood-pressure",
+            "description": "The pressure of blood in the circulatory system.",
+            "id": "loinc:8480-6",
+            "timestamp": 1753443072520
+        },
+        {
+            "type": "heart-rate",
+            "bpm": 72,
+            "name": "Heart Rate",
+            "internalName": "heart-rate",
+            "description": "The number of heartbeats per minute.",
+            "id": "loinc:8867-4",
+            "timestamp": 1753443072521
+        }
+    ]
+}

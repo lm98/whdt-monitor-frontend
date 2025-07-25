@@ -4,11 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import mqtt, { MqttClient } from "mqtt";
 import type { HdtCreateResponse } from "@/types/hdt";
+import HdtList from "@/components/HdtList";
+import HdtDetail from "@/components/HdtDetail";
 
 export default function Home() {
   const [jsonInput, setJsonInput] = useState("");
   const mqttBrokerUrl = process.env.MQTT_BROKER || "ws://localhost:9001"
   const mqttClientRef = useRef<MqttClient | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
       const client = mqtt.connect(mqttBrokerUrl);
@@ -88,7 +91,7 @@ export default function Home() {
 
   return (
     <main className="p-8 space-y-4">
-      <h1 className="text-xl font-bold">Digital Twin Client (Typed)</h1>
+      <h1 className="text-xl font-bold">Human Digital Twin Manager</h1>
 
       <textarea
         className="w-full h-64 p-4 border rounded shadow"
@@ -103,6 +106,14 @@ export default function Home() {
       >
         Create DigitalTwin
       </button>
+
+      {/* List of available DTs */}
+      <HdtList onSelect={setSelectedId} />
+
+      {/* Detail pop-up when selected */}
+      {selectedId && (
+        <HdtDetail id={selectedId} onClose={() => setSelectedId(null)} />
+      )}
     </main>
   );
 }

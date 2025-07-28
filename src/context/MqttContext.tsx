@@ -51,7 +51,11 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
     propertyTypes.forEach((type) => {
       const topic = `${dtId}/state/${type}`;
       clientRef.current?.subscribe(topic, err => {
-        if (err) console.error("Subscription error:", err);
+        if (err) {
+            console.error("Subscription error:", err);
+        } else {
+            console.log("Subscribed to topic: ", topic);
+        }
       });
     });
   };

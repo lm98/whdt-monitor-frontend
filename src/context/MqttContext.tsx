@@ -22,6 +22,7 @@ const MqttContext = createContext<MqttContextType | undefined>(undefined);
 export function MqttProvider({ children }: { children: React.ReactNode }) {
   const [history, setHistory] = useState<TwinHistory>({});
   const clientRef = useRef<mqtt.MqttClient | null>(null);
+  const subscribedTopics = useRef(new Set<string>());
 
   useEffect(() => {
     const client = mqtt.connect("ws://localhost:9001");
@@ -37,7 +38,7 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
         const message = JSON.parse(payload.toString());
         const timestamp = Date.now();
         const newEntry: HistoryEntry = { timestamp, value: message };
-
+        console.log(`Received from topic ${topic}: ${payload}`)
         setHistory(prev => {
           const dt = prev[dtId] || {};
           const prop = dt[propertyType] || [];
@@ -64,11 +65,19 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
   const subscribeToDT = (dtId: string, propertyTypes: string[]) => {
     propertyTypes.forEach((type) => {
       const topic = `${dtId}/state/${type}`;
-      clientRef.current?.subscribe(topic, err => {
-        if (err) console.error("Subscription error:", err);
-      });
+      if (!subscribedTopics.current.has(topic)) {
+        clientRef.current?.subscribe(topic, (err) => {
+          if (err) {
+            console.error("Subscription error:", err);
+          } else {
+            subscribedTopics.current.add(topic);
+            console.log("Subscribed to topic: ", topic)
+          }
+        });
+      }
     });
   };
+
 
   return (
     <MqttContext.Provider value={{ history, subscribeToDT }}>
@@ -79,6 +88,6 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
 
 export const useMqtt = () => {
   const ctx = useContext(MqttContext);
-  if (!ctx) throw new Error("useMqtt must be used inside MqttProvider");
+  if (!ctx) throw new Error("useMqtt must be used inside MqttContext");
   return ctx;
 };

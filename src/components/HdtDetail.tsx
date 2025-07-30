@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useMqtt } from "@/context/MqttContext";
+import { Property } from "@/types/property";
 
 interface HdtDetailProps {
   id: string;
@@ -10,20 +11,18 @@ interface HdtDetailProps {
 export default function HdtDetail({ id }: HdtDetailProps) {
   const [state, setState] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { messages, subscribeToDT } = useMqtt();
+  const { history, subscribeToDT } = useMqtt();
 
   const fetchState = async () => {
     try {
       const res = await fetch(`/api/hdt/${id}/state`);
       const data = await res.json();
       setState(data);
-
-      console.log("fetched state: ", state)
-
-      const properties = data.properties.map((p: any) =>
+      console.log("Fetched state: ", data)
+      const propertyTypes = data.properties.map((p: any) =>
         p.key.split(".").pop()
       );
-      subscribeToDT(id, properties);
+      subscribeToDT(id, propertyTypes);
     } catch (err) {
       console.error("Failed to fetch DT state:", err);
     } finally {
@@ -39,10 +38,11 @@ export default function HdtDetail({ id }: HdtDetailProps) {
     if (!state) return [];
     return state.properties.map((p: any) => {
       const type = p.type.split(".").pop();
-      const liveValue = messages[id]?.[type];
-      return liveValue ? { ...p, value: liveValue } : p;
+      const updates = history[id]?.[type];
+      const latest = updates?.[updates.length - 1];
+      return latest ? { ...p, value: latest.value } : p;
     });
-  }, [state, messages, id]);
+  }, [state, history, id]);
 
   return (
     <div className="bg-gray-900 text-white p-4 rounded shadow w-full">

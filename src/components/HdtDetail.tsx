@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useMqtt } from "@/context/MqttContext";
-import { Property } from "@/types/property";
+import { useEffect, useState } from "react";
 
 interface HdtDetailProps {
   id: string;
@@ -11,18 +9,12 @@ interface HdtDetailProps {
 export default function HdtDetail({ id }: HdtDetailProps) {
   const [state, setState] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { history, subscribeToDT } = useMqtt();
 
   const fetchState = async () => {
     try {
       const res = await fetch(`/api/hdt/${id}/state`);
       const data = await res.json();
       setState(data);
-      console.log("Fetched state: ", data)
-      const propertyTypes = data.properties.map((p: any) =>
-        p.key.split(".").pop()
-      );
-      subscribeToDT(id, propertyTypes);
     } catch (err) {
       console.error("Failed to fetch DT state:", err);
     } finally {
@@ -32,17 +24,13 @@ export default function HdtDetail({ id }: HdtDetailProps) {
 
   useEffect(() => {
     fetchState();
-  }, [id]);
 
-  const mergedProperties = useMemo(() => {
-    if (!state) return [];
-    return state.properties.map((p: any) => {
-      const type = p.type.split(".").pop();
-      const updates = history[id]?.[type];
-      const latest = updates?.[updates.length - 1];
-      return latest ? { ...p, value: latest.value } : p;
-    });
-  }, [state, history, id]);
+    const interval = setInterval(() => {
+      fetchState();
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [id]);
 
   return (
     <div className="bg-gray-900 text-white p-4 rounded shadow w-full">
@@ -60,10 +48,11 @@ export default function HdtDetail({ id }: HdtDetailProps) {
             </tr>
           </thead>
           <tbody>
-            {mergedProperties.map((prop: any) => {
+            {state?.properties.map((prop: any) => {
               const type = prop.type.split(".").pop();
               const valueObj = prop.value;
-              const timestamp = valueObj.timestamp
+
+              const timestamp = valueObj?.timestamp
                 ? new Date(valueObj.timestamp).toLocaleString()
                 : "—";
 

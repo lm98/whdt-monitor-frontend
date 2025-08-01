@@ -1,9 +1,10 @@
 // app/hdt/[id]/property-live/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useMqtt } from "@/context/MqttContext";
 import LiveLineChart from "@/components/LiveLineChart";
+import { PropertyResponse } from "@/types/hdt";
 
 interface PropertyListItemProps {
   propertyType: string;
@@ -24,34 +25,53 @@ function PropertyListItem({ propertyType, selected, onClick }: PropertyListItemP
   );
 }
 
-export default function PropertyLiveUpdatePage({ params }: { params: { id: string } }) {
-  const dtId = params.id;
+export default function PropertyLiveUpdatePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const { history, subscribeToDT } = useMqtt();
+  const [dtProperties, setDtProperties] = useState<string[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
 
-  // Get available property types from MQTT data
-  const propertyTypes = Object.keys(history[dtId] || {});
+  const fetchProperties = async () => {
+    try {
+      let res = await fetch(`/api/hdt/${id}/state/properties`)
+      let data: Array<PropertyResponse> = await res.json()
+      let names = data.map(p => p.value).map(p => p.internalName)
+      console.log("Fetched properties: ", names)
+      setDtProperties(names)
+    } catch (err) {
+      console.error("Failed to fetch DT properties:", err);
+      setDtProperties([])
+    }
+  }
 
   // Select first one as default
   useEffect(() => {
-    if (propertyTypes.length && !selectedProperty) {
-      setSelectedProperty(propertyTypes[0]);
+    fetchProperties()
+
+    if (!selectedProperty) {
+      setSelectedProperty(dtProperties[0]);
     }
-  }, [propertyTypes, selectedProperty]);
+
+    const interval = setInterval(() => {
+      fetchProperties();
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [id]);
 
   // Sub to all property topics (only once)
   useEffect(() => {
-    if (propertyTypes.length) {
-      subscribeToDT(dtId, propertyTypes);
+    if (dtProperties) {
+      subscribeToDT(id, dtProperties);
     }
-  }, [dtId, propertyTypes.join(",")]); // stringify join to trigger effect if propertyTypes changes
+  }, [id, dtProperties.join(",")]); // stringify join to trigger effect if propertyTypes changes
 
   return (
     <div className="flex w-full h-full p-4 gap-4">
       {/* Left - Property list */}
       <div className="w-1/4 bg-gray-900 rounded p-2 overflow-auto max-h-screen">
         <h2 className="font-bold text-white mb-2">Properties</h2>
-        {propertyTypes.map((type) => (
+        {dtProperties.map((type) => (
           <PropertyListItem
             key={type}
             propertyType={type}
@@ -69,9 +89,9 @@ export default function PropertyLiveUpdatePage({ params }: { params: { id: strin
 
         {selectedProperty ? (
           <LiveLineChart
-            dtId={dtId}
+            dtId={id}
             propertyType={selectedProperty}
-            data={history[dtId]?.[selectedProperty] || []}
+            data={history[id]?.[selectedProperty] || []}
           />
         ) : (
           <p className="text-white">Select a property to view its live chart.</p>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useMqtt } from "@/context/MqttContext";
 import { emptyStatusResponse, HdtStatusResponse, PropertyResponse } from "@/types/hdt";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,7 +12,6 @@ export default function HdtDetail({ id }: HdtDetailProps) {
   const [state, setState] = useState<HdtStatusResponse>(emptyStatusResponse());
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const { history, subscribeToDT } = useMqtt()
 
   const fetchState = async () => {
     try {
@@ -21,8 +19,6 @@ export default function HdtDetail({ id }: HdtDetailProps) {
       const data: HdtStatusResponse = await res.json();
       setState(data);
       console.log("Fetched state: ", data)
-      const propertyNames = data.properties.map((p) => p.value).map((p) => p.internalName);
-      subscribeToDT(id, propertyNames);
     } catch (err) {
       console.error("Failed to fetch DT state:", err);
     } finally {

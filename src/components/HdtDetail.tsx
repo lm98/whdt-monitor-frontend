@@ -1,15 +1,44 @@
 "use client";
 
 import { useMqtt } from "@/context/MqttContext";
+import { Property } from "@/types/property";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+interface HdtStatusResponse {
+  actions: Array<any>
+  events: Array<any>
+  properties: Array<PropertyResponse>
+  relationships: Array<any>
+}
+
+const emptyStatusResponse: () => HdtStatusResponse = () => {
+  return {
+    actions: [],
+    events: [],
+    properties: [],
+    relationships: [],
+  }
+}
+
+/**
+ * This interface encapsulates a response to a Status request from the WLDT HTTP adapter.
+ */
+interface PropertyResponse {
+  exposed: boolean
+  key: string
+  readable: boolean
+  type: string
+  value: Property
+  writable: boolean
+}
 
 interface HdtDetailProps {
   id: string;
 }
 
 export default function HdtDetail({ id }: HdtDetailProps) {
-  const [state, setState] = useState<any>(null);
+  const [state, setState] = useState<HdtStatusResponse>(emptyStatusResponse());
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { history, subscribeToDT } = useMqtt()
@@ -17,12 +46,11 @@ export default function HdtDetail({ id }: HdtDetailProps) {
   const fetchState = async () => {
     try {
       const res = await fetch(`/api/hdt/${id}/state`);
-      const data = await res.json();
+      const data: HdtStatusResponse = await res.json();
       setState(data);
-      const properties = data.properties.map((p: any) =>
-        p.key.split(".").pop()
-      );
-      subscribeToDT(id, properties);
+      console.log("Fetched state: ", data)
+      const propertyNames = data.properties.map((p) => p.value).map((p) => p.internalName);
+      subscribeToDT(id, propertyNames);
     } catch (err) {
       console.error("Failed to fetch DT state:", err);
     } finally {
@@ -56,7 +84,7 @@ export default function HdtDetail({ id }: HdtDetailProps) {
             </tr>
           </thead>
           <tbody>
-            {state?.properties.map((prop: any) => {
+            {state?.properties.map((prop: PropertyResponse) => {
               const type = prop.type.split(".").pop();
               const valueObj = prop.value;
 

@@ -1,40 +1,9 @@
 "use client";
 
 import { useMqtt } from "@/context/MqttContext";
-import { Property } from "@/types/property";
+import { emptyStatusResponse, HdtStatusResponse, PropertyResponse } from "@/types/hdt";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-/**
- * This interface encapsulates a response to a Status request from the WLDT HTTP adapter.
- */
-interface HdtStatusResponse {
-  actions: Array<any>
-  events: Array<any>
-  properties: Array<PropertyResponse>
-  relationships: Array<any>
-}
-
-const emptyStatusResponse: () => HdtStatusResponse = () => {
-  return {
-    actions: [],
-    events: [],
-    properties: [],
-    relationships: [],
-  }
-}
-
-/**
- * This interface encapsulates a Property inside the response to a Status request from the WLDT HTTP adapter.
- */
-interface PropertyResponse {
-  exposed: boolean
-  key: string
-  readable: boolean
-  type: string
-  value: Property
-  writable: boolean
-}
 
 interface HdtDetailProps {
   id: string;

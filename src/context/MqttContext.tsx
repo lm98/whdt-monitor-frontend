@@ -4,7 +4,7 @@ import { Property } from "@/types/property";
 import mqtt from "mqtt";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
-type HistoryEntry = {
+export type HistoryEntry = {
   timestamp: number;
   value: Property;
 };

@@ -8,6 +8,7 @@ export interface Property {
     description: string
     id: string
     type: string
+    timestamp: number | undefined
 }
 
 export interface HeartRate extends Property {

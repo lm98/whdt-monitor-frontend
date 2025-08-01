@@ -1,5 +1,7 @@
 "use client";
 
+import { useMqtt } from "@/context/MqttContext";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface HdtDetailProps {
@@ -9,12 +11,18 @@ interface HdtDetailProps {
 export default function HdtDetail({ id }: HdtDetailProps) {
   const [state, setState] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const { history, subscribeToDT } = useMqtt()
 
   const fetchState = async () => {
     try {
       const res = await fetch(`/api/hdt/${id}/state`);
       const data = await res.json();
       setState(data);
+      const properties = data.properties.map((p: any) =>
+        p.key.split(".").pop()
+      );
+      subscribeToDT(id, properties);
     } catch (err) {
       console.error("Failed to fetch DT state:", err);
     } finally {
@@ -64,7 +72,11 @@ export default function HdtDetail({ id }: HdtDetailProps) {
                 .join(", ");
 
               return (
-                <tr key={prop.key} className="bg-gray-900 hover:bg-gray-800">
+                <tr 
+                  key={prop.key} 
+                  className="bg-gray-900 hover:bg-gray-800"
+                  onClick={() => router.push(`/hdt/${id}/property-live`)}
+                >
                   <td className="p-2 border border-gray-700">{prop.key}</td>
                   <td className="p-2 border border-gray-700">{type}</td>
                   <td className="p-2 border border-gray-700">{valueString || "—"}</td>

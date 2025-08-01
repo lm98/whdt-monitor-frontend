@@ -5,6 +5,9 @@ import { Property } from "@/types/property";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+/**
+ * This interface encapsulates a response to a Status request from the WLDT HTTP adapter.
+ */
 interface HdtStatusResponse {
   actions: Array<any>
   events: Array<any>
@@ -22,7 +25,7 @@ const emptyStatusResponse: () => HdtStatusResponse = () => {
 }
 
 /**
- * This interface encapsulates a response to a Status request from the WLDT HTTP adapter.
+ * This interface encapsulates a Property inside the response to a Status request from the WLDT HTTP adapter.
  */
 interface PropertyResponse {
   exposed: boolean

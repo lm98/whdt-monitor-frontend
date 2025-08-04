@@ -2,39 +2,60 @@
     "id": "hd1",
     "properties": [
         {
-            "type": "given-name",
-            "givenName": "John",
-            "name": "Given Name",
-            "internalName": "given-name",
-            "description": "A name property.",
-            "id": "custom:given-name"
+            "name": "First Name",
+            "id": "first-name",
+            "description": "The first name of a person, typically used to identify them in a personal context.",
+            "valueMap": {
+                "value": {
+                    "type": "string-value",
+                    "value": "John"
+                }
+            }
         },
         {
-            "type": "surname",
-            "surname": "Doe",
             "name": "Surname",
-            "internalName": "surname",
-            "description": "A name property.",
-            "id": "custom:surname"
+            "id": "surname",
+            "description": "The family name or last name of a person, used to identify them in a familial context.",
+            "valueMap": {
+                "value": {
+                    "type": "string-value",
+                    "value": "Doe"
+                }
+            }
         },
         {
-            "type": "blood-pressure",
-            "systolic": 120,
-            "diastolic": 80,
             "name": "Blood Pressure",
-            "internalName": "blood-pressure",
+            "id": "blood-pressure",
             "description": "The pressure of blood in the circulatory system.",
-            "id": "loinc:8480-6",
-            "timestamp": 1753443072520
+            "valueMap": {
+                "systolic": {
+                    "type": "int-value",
+                    "value": 120
+                },
+                "diastolic": {
+                    "type": "int-value",
+                    "value": 80
+                },
+                "timestamp": {
+                    "type": "long-value",
+                    "value": 1754307346042
+                }
+            }
         },
         {
-            "type": "heart-rate",
-            "bpm": 72,
             "name": "Heart Rate",
-            "internalName": "heart-rate",
-            "description": "The number of heartbeats per minute.",
-            "id": "loinc:8867-4",
-            "timestamp": 1753443072521
+            "id": "heart-rate",
+            "description": "The number of heartbeats per minute, typically measured in beats per minute (bpm).",
+            "valueMap": {
+                "bpm": {
+                    "type": "int-value",
+                    "value": 72
+                },
+                "timestamp": {
+                    "type": "long-value",
+                    "value": 1754307346043
+                }
+            }
         }
     ]
 }

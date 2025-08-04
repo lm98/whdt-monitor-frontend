@@ -35,7 +35,7 @@ export default function PropertyLiveUpdatePage({ params }: { params: Promise<{ i
     try {
       let res = await fetch(`/api/hdt/${id}/state/properties`)
       let data: Array<PropertyResponse> = await res.json()
-      let names = data.map(p => p.value).map(p => p.internalName)
+      let names = data.map(p => p.value).map(p => p.id)
       console.log("Fetched properties: ", names)
       setDtProperties(names)
     } catch (err) {

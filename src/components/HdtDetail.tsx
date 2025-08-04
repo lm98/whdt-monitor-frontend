@@ -46,25 +46,22 @@ export default function HdtDetail({ id }: HdtDetailProps) {
           <thead className="bg-gray-800 text-gray-300">
             <tr>
               <th className="p-2 border border-gray-600">Key</th>
-              <th className="p-2 border border-gray-600">Type</th>
               <th className="p-2 border border-gray-600">Value</th>
               <th className="p-2 border border-gray-600">Timestamp</th>
             </tr>
           </thead>
           <tbody>
             {state?.properties.map((prop: PropertyResponse) => {
-              const type = prop.type.split(".").pop();
-              const valueObj = prop.value;
+              const valueMap = prop.value.valueMap
 
-              const timestamp = valueObj?.timestamp
-                ? new Date(valueObj.timestamp).toLocaleString()
+              const timestamp = valueMap["timestamp"]
+                ? new Date(valueMap["timestamp"].value as number).toLocaleString()
                 : "—";
 
-              const valueString = Object.entries(valueObj)
-                .filter(([k]) =>
-                  !["timestamp", "name", "internalName", "description", "id"].includes(k)
-                )
-                .map(([k, v]) => `${k}: ${v}`)
+              const valueString = Object.entries(valueMap)
+                //filter out timestamp value as we already got it
+                .filter(([k]) => !["timestamp",].includes(k))
+                .map(([k, v]) => `${k}: ${v.value}`)
                 .join(", ");
 
               return (
@@ -74,7 +71,6 @@ export default function HdtDetail({ id }: HdtDetailProps) {
                   onClick={() => router.push(`/hdt/${id}/property-live`)}
                 >
                   <td className="p-2 border border-gray-700">{prop.key}</td>
-                  <td className="p-2 border border-gray-700">{type}</td>
                   <td className="p-2 border border-gray-700">{valueString || "—"}</td>
                   <td className="p-2 border border-gray-700">{timestamp}</td>
                 </tr>

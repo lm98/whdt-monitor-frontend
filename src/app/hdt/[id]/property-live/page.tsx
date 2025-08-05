@@ -91,7 +91,6 @@ export default function PropertyLiveUpdatePage({ params }: { params: Promise<{ i
           <LiveLineChart
             dtId={id}
             propertyType={selectedProperty}
-            data={history[id]?.[selectedProperty] || []}
           />
         ) : (
           <p className="text-white">Select a property to view its live chart.</p>

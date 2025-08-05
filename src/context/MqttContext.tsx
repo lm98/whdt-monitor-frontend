@@ -34,7 +34,7 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
 
     client.on("message", (topic, payload) => {
       try {
-        const [, dtId, , propertyType] = topic.split("/");
+        const [dtId, , propertyType] = topic.split("/");
         const message = JSON.parse(payload.toString());
         const timestamp = Date.now();
         const newEntry: HistoryEntry = { timestamp, value: message };

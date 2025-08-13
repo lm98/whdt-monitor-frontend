@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import HdtDetail from "@/components/HdtDetail"; // adjust path based on your structure
+import { HdtCreateResponse } from "@/types/hdt";
+import { useMqtt } from "@/context/MqttContext";
 
 export default function HdtManager() {
   const [hdtList, setHdtList] = useState<string[]>([]);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [jsonInput, setJsonInput] = useState("");
+  const { history, subscribeToDT } = useMqtt();
 
   const fetchHdts = async () => {
     try {
@@ -33,7 +36,11 @@ export default function HdtManager() {
       });
       if (res.ok) {
         await fetchHdts();
-        
+        const createResponse: HdtCreateResponse = await res.json();
+        createResponse.models.forEach(model => {
+          const propertyNames = model.properties.map(p => p.id);
+          subscribeToDT(createResponse.id, propertyNames);
+        })
       } else {
         alert("Failed to create Digital Twin");
       }

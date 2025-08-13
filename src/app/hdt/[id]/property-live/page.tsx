@@ -2,7 +2,6 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { useMqtt } from "@/context/MqttContext";
 import LiveLineChart from "@/components/LiveLineChart";
 import { PropertyResponse } from "@/types/hdt";
 
@@ -27,7 +26,6 @@ function PropertyListItem({ propertyType, selected, onClick }: PropertyListItemP
 
 export default function PropertyLiveUpdatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { history, subscribeToDT } = useMqtt();
   const [dtProperties, setDtProperties] = useState<string[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
 
@@ -58,13 +56,6 @@ export default function PropertyLiveUpdatePage({ params }: { params: Promise<{ i
 
     return () => clearInterval(interval);
   }, [id]);
-
-  // Sub to all property topics (only once)
-  useEffect(() => {
-    if (dtProperties) {
-      subscribeToDT(id, dtProperties);
-    }
-  }, [id, dtProperties.join(",")]); // stringify join to trigger effect if propertyTypes changes
 
   return (
     <div className="flex w-full h-full p-4 gap-4">

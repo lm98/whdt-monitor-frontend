@@ -39,6 +39,14 @@ export default function LiveLineChart({ dtId, propertyType }: LiveLineChartProps
       keys.push("systolic", "diastolic");
       break;
     }
+    case "heart-rate": {
+      keys.push("bpm");
+      break;
+    }
+    case "mood": {
+      keys.push("moodScore");
+      break;
+    }
     default: {
       // Auto-extract keys from first sample (excluding "timestamp")
       if (chartData.length > 0) {

@@ -56,6 +56,21 @@
                     "value": 1754307346043
                 }
             }
+        },
+        {
+            "name": "Mood",
+            "id": "mood",
+            "description": "A numerical score for the mood level.",
+            "valueMap": {
+                "moodScore": {
+                    "type": "int-value",
+                    "value": 72
+                },
+                "timestamp": {
+                    "type": "long-value",
+                    "value": 1754307346043
+                }
+            }
         }
     ]
 }
